@@ -3,6 +3,9 @@ import { Server } from 'socket.io';
 import axios from 'axios';
 import http from 'http';
 import natural from 'natural';
+import dotenv from 'dotenv';
+
+dotenv.config(); // load FINNHUB_KEY or other API keys from .env
 
 const app = express();
 const server = http.createServer(app);
@@ -47,6 +50,19 @@ async function updateNews() {
         console.error(err); 
     }
 }
+
+// simple proxy route that returns the latest Nifty 50 quote from Finnhub
+app.get('/api/nifty', async (req, res) => {
+    try {
+        const token = process.env.FINNHUB_KEY || 'YOUR_KEY';
+        const resp = await axios.get(`https://finnhub.io/api/v1/quote?symbol=NSEI&token=${token}`);
+        // resp.data contains c: current price, h: high, l: low, o: open, pc: previous close
+        res.json(resp.data);
+    } catch (err) {
+        console.error('error fetching nifty quote', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 app.get('/trigger-crash', (req, res) => {
     io.emit("drastic_alert", {
