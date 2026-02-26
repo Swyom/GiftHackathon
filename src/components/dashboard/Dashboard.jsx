@@ -14,7 +14,8 @@ import {
   Cog6ToothIcon,
   CreditCardIcon,
   DocumentTextIcon,
-  PresentationChartLineIcon
+  PresentationChartLineIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import StockCard from './StockCard';
@@ -31,7 +32,7 @@ function Dashboard(props) {
   
   // Sample data based on the image
   const userStats = {
-    name: "Matt",
+    name: user?.name || "Matt",
     balance: 14032.56,
     balanceChange: 5.63,
     currentValue: 203.65,
@@ -87,13 +88,13 @@ function Dashboard(props) {
       <header className="bg-gray-900/50 backdrop-blur-xl border-b border-gray-800 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
+            {/* Logo - Now clickable to go back home */}
+            <button onClick={props.onHome} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
                 <span className="text-white font-bold text-xl">F</span>
               </div>
-              <span className="text-white font-semibold text-xl">Foxstocks</span>
-            </div>
+              <span className="text-white font-semibold text-xl">FinVerse</span>
+            </button>
 
             {/* Navigation */}
             <nav className="hidden lg:flex items-center space-x-1">
@@ -127,9 +128,10 @@ function Dashboard(props) {
               {props.onLogout && (
                 <button
                   onClick={props.onLogout}
-                  className="ml-2 px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
+                  className="flex items-center space-x-2 ml-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg text-sm hover:bg-red-600/30 transition-all duration-200"
                 >
-                  Logout
+                  <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                  <span>Logout</span>
                 </button>
               )}
               <div className="flex items-center space-x-3 pl-4 border-l border-gray-700">
@@ -138,7 +140,9 @@ function Dashboard(props) {
                   <p className="text-white font-semibold">{user?.name || userStats.name}</p>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                  <UserCircleIcon className="w-6 h-6 text-white" />
+                  <span className="text-white font-bold text-lg">
+                    {user?.name?.charAt(0).toUpperCase() || userStats.name.charAt(0)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -246,6 +250,12 @@ function Dashboard(props) {
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={performanceData}>
                   <Line type="monotone" dataKey="value" stroke="#4ade80" strokeWidth={2} />
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
                 </LineChart>
               </ResponsiveContainer>
             </motion.div>
@@ -268,7 +278,7 @@ function Dashboard(props) {
                     cy="50%"
                     outerRadius={80}
                     fill="#8884d8"
-                    label
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {distributionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

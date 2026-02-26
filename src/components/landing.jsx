@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Menu, X, BookOpen, TrendingUp, BarChart3, Users, Zap, Search, PieChart, ShieldCheck } from 'lucide-react';
 
-const FinVerseLanding = ({ onLogin, onGetStarted }) => {
+const FinVerseLanding = ({ user, onLogin, onGetStarted, onGoToDashboard, onLogout }) => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Theme Logic
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -14,12 +13,13 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
     }
   }, [isDarkMode]);
 
-  // Intersection Observer for Scroll Reveals
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add('opacity-100', 'translate-y-0');
+          if (entry.isIntersecting) {
+            entry.target.classList.add('opacity-100', 'translate-y-0');
+          }
         });
       },
       { threshold: 0.1 }
@@ -35,10 +35,12 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
     </a>
   );
 
+  // Safe fallback for user data
+  const displayName = user?.name || 'Trader';
+  const displayInitial = displayName.charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#020617] text-slate-900 dark:text-slate-200 transition-colors duration-300">
-      
-      {/* Navbar */}
       <nav className="fixed w-full z-50 bg-white/70 dark:bg-[#020617]/70 backdrop-blur-xl border-b border-black/5 dark:border-white/5 top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
@@ -64,18 +66,40 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
               
-              <button
-                onClick={onLogin}
-                className="hidden sm:block px-5 py-2 text-sm font-medium border border-slate-300 dark:border-slate-700 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition"
-              >
-                Login
-              </button>
-              <button
-                onClick={onGetStarted}
-                className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-full text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform"
-              >
-                Get Started
-              </button>
+              {/* Dynamic Auth Buttons - Here is where it changes if Logged In! */}
+              {user ? (
+                <div className="hidden sm:flex items-center gap-4">
+                  <button 
+                    onClick={onGoToDashboard}
+                    className="px-5 py-2 text-sm font-medium border border-emerald-500 text-emerald-600 dark:text-emerald-400 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition"
+                  >
+                    Dashboard
+                  </button>
+                  <div className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-white/10">
+                    <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                      {displayInitial}
+                    </div>
+                    <button onClick={onLogout} className="text-sm font-medium text-slate-500 hover:text-red-500 transition">
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={onLogin}
+                    className="hidden sm:block px-5 py-2 text-sm font-medium border border-slate-300 dark:border-slate-700 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={onGetStarted}
+                    className="hidden sm:block px-5 py-2 text-sm font-medium bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-full text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform"
+                  >
+                    Get Started
+                  </button>
+                </>
+              )}
               
               <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden">
                 {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -89,10 +113,41 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
           <div className="md:hidden bg-white dark:bg-slate-900 border-t border-black/10 dark:border-white/10 px-4 py-6 flex flex-col space-y-4">
             <a href="#features" className="text-lg" onClick={() => setIsMenuOpen(false)}>Features</a>
             <a href="#how-it-works" className="text-lg" onClick={() => setIsMenuOpen(false)}>How It Works</a>
-            <button
-              onClick={onGetStarted}
-              className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold"
-            >Get Started</button>
+            <a href="#dashboard" className="text-lg" onClick={() => setIsMenuOpen(false)}>Modules</a>
+            <a href="#community" className="text-lg" onClick={() => setIsMenuOpen(false)}>Community</a>
+            
+            {user ? (
+              <div className="pt-4 border-t border-black/10 dark:border-white/10">
+                <div className="flex items-center gap-3 mb-4 px-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                    {displayInitial}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900 dark:text-white">{displayName}</p>
+                    <p className="text-sm text-slate-500">{user?.email || 'Logged in'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setIsMenuOpen(false); onGoToDashboard(); }}
+                  className="w-full py-3 mb-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl font-bold border border-emerald-500/20"
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  onClick={() => { setIsMenuOpen(false); onLogout(); }}
+                  className="w-full py-3 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl font-bold border border-red-500/20"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setIsMenuOpen(false); onGetStarted(); }}
+                className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold"
+              >
+                Get Started
+              </button>
+            )}
           </div>
         )}
       </nav>
@@ -115,8 +170,11 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
               An AI-powered financial ecosystem that bridges education, real-time market intelligence, and personalized strategy.
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-              <button className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-xl font-bold text-white shadow-xl shadow-emerald-500/20 hover:scale-105 transition-all">
-                Start Learning
+              <button 
+                onClick={user ? onGoToDashboard : onGetStarted}
+                className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-xl font-bold text-white shadow-xl shadow-emerald-500/20 hover:scale-105 transition-all"
+              >
+                {user ? 'Enter Dashboard' : 'Start Learning'}
               </button>
               <button className="px-8 py-4 bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
                 Explore Playground
@@ -125,8 +183,8 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
           </div>
 
           {/* Abstract UI Mockup */}
-          <div className="relative reveal opacity-0 translate-y-8 transition-all duration-700 delay-200 hidden sm:block">
-            <div className="animate-[bounce_6s_ease-in-out_infinite] bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-white/10">
+          <div className="relative reveal opacity-0 translate-y-8 transition-all duration-700 delay-200 hidden lg:block">
+            <div className="animate-bounce bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-white/10">
               <div className="flex items-center gap-2 mb-6 border-b border-black/5 dark:border-white/10 pb-4">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
                 <div className="w-3 h-3 rounded-full bg-amber-400" />
@@ -157,23 +215,12 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={<BookOpen className="text-emerald-500" />} 
-              title="Learning Hub" 
-              desc="Master complex markets through AI-curated interactive paths."
-            />
-            <FeatureCard 
-              icon={<TrendingUp className="text-cyan-500" />} 
-              title="Predictive Models" 
-              desc="Deep learning forecasting based on multi-dimensional data."
-              delay="delay-100"
-            />
-            <FeatureCard 
-              icon={<BarChart3 className="text-indigo-500" />} 
-              title="Portfolio Audit" 
-              desc="Instant risk assessment and automated diversification logic."
-              delay="delay-200"
-            />
+            <FeatureCard icon={<BookOpen className="text-emerald-500" />} title="Learning Hub" desc="Master complex markets through AI-curated interactive paths." />
+            <FeatureCard icon={<TrendingUp className="text-cyan-500" />} title="Predictive Models" desc="Deep learning forecasting based on multi-dimensional data." delay="delay-100" />
+            <FeatureCard icon={<BarChart3 className="text-indigo-500" />} title="Portfolio Audit" desc="Instant risk assessment and automated diversification logic." delay="delay-200" />
+            <FeatureCard icon={<PieChart className="text-purple-500" />} title="Risk Analysis" desc="Advanced risk metrics and stress testing scenarios." delay="delay-300" />
+            <FeatureCard icon={<ShieldCheck className="text-orange-500" />} title="Smart Alerts" desc="AI-powered notifications for market opportunities." delay="delay-400" />
+            <FeatureCard icon={<Users className="text-pink-500" />} title="Community Insights" desc="Learn from top traders and share strategies." delay="delay-500" />
           </div>
         </div>
       </section>
