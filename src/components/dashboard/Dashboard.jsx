@@ -2,19 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   UserCircleIcon,
-  EyeIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  WalletIcon,
-  ChartBarIcon,
-  NewspaperIcon,
-  BookOpenIcon,
   MagnifyingGlassIcon,
   BellIcon,
-  Cog6ToothIcon,
-  CreditCardIcon,
-  DocumentTextIcon,
-  PresentationChartLineIcon
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import StockCard from './StockCard';
@@ -23,12 +13,23 @@ import PortfolioAnalytics from './PortfolioAnalytics';
 import Watchlist from './Watchlist';
 import TopStocks from './TopStocks';
 import QuickActions from './QuickActions';
+import NewsModule from './newsmodule';
 
-function Dashboard(props) {
-  const user = props.user;
+function Dashboard({ user }) {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [selectedMarket, setSelectedMarket] = useState('NASDAQ');
-  
+  const [niftyQuote, setNiftyQuote] = useState(null);
+
+  useEffect(() => {
+    // fetch latest Nifty 50 price from backend proxy
+    fetch('/api/nifty')
+      .then((res) => res.json())
+      .then((data) => {
+        setNiftyQuote(data);
+      })
+      .catch((err) => console.error('failed to load nifty quote', err));
+  }, []);
+
   // Sample data based on the image
   const userStats = {
     name: "Matt",
@@ -73,81 +74,9 @@ function Dashboard(props) {
   const distributionData = myStocks.map((s) => ({ name: s.symbol, value: s.value }));
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28EFF'];
 
-  const quickNavItems = [
-    { name: 'Dashboard', icon: ChartBarIcon, active: true },
-    { name: 'Portfolio', icon: WalletIcon },
-    { name: 'Trading', icon: ArrowTrendingUpIcon },
-    { name: 'Wallet', icon: CreditCardIcon },
-    { name: 'Tutorial', icon: BookOpenIcon }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Header */}
-      <header className="bg-gray-900/50 backdrop-blur-xl border-b border-gray-800 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-xl">F</span>
-              </div>
-              <span className="text-white font-semibold text-xl">Foxstocks</span>
-            </div>
-
-            {/* Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {quickNavItems.map((item) => (
-                <button
-                  key={item.name}
-                  className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 ${
-                    item.active 
-                      ? 'bg-blue-500/20 text-blue-400' 
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.name}</span>
-                </button>
-              ))}
-            </nav>
-
-            {/* Right Section */}
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
-                <MagnifyingGlassIcon className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative">
-                <BellIcon className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
-                <Cog6ToothIcon className="w-5 h-5" />
-              </button>
-              {props.onLogout && (
-                <button
-                  onClick={props.onLogout}
-                  className="ml-2 px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
-                >
-                  Logout
-                </button>
-              )}
-              <div className="flex items-center space-x-3 pl-4 border-l border-gray-700">
-                <div className="text-right">
-                  <p className="text-sm text-gray-400">Welcome back,</p>
-                  <p className="text-white font-semibold">{user?.name || userStats.name}</p>
-                </div>
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                  <UserCircleIcon className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
+    <div>
+      <div className="grid grid-cols-12 gap-6">
           {/* Main Content - Left Side (8 columns) */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
             {/* Welcome Section */}
@@ -293,6 +222,12 @@ function Dashboard(props) {
             >
               <h2 className="text-lg font-semibold text-white mb-4">Quick Stats</h2>
               <div className="space-y-3">
+                {niftyQuote && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">NIFTY 50</span>
+                    <span className="text-white font-medium">{niftyQuote.c}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">NASDAQ</span>
                   <span className="text-white font-medium">{userStats.nasdaq}</span>
@@ -348,7 +283,6 @@ function Dashboard(props) {
             </button>
           ))}
         </motion.div>
-      </main>
     </div>
   );
 }
