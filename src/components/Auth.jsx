@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function Auth() {
+export default function Auth({ onBack }) {
   const [isSignUp, setIsSignUp] = useState(false);
 
   return (
@@ -19,9 +19,19 @@ export default function Auth() {
       <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-[90%] max-w-md">
 
-          <h2 className="text-2xl font-bold text-center mb-6">
+          <div className="flex justify-between items-center mb-6">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              &larr; Back
+            </button>
+          )}
+          <h2 className="text-2xl font-bold text-center flex-1">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </h2>
+        </div>
 
           <form className="space-y-4">
 
