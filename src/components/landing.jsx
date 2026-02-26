@@ -45,7 +45,7 @@ const FinVerseLanding = ({ onLogin, onGetStarted }) => {
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-lg shadow-lg shadow-emerald-500/20" />
               <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                FinVerse <span className="text-emerald-500">AI</span>
+                FinVerse
               </span>
             </div>
             

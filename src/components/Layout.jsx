@@ -33,7 +33,7 @@ function Layout({ user, onLogout }) {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
                 <span className="text-white font-bold text-xl">F</span>
               </div>
-              <span className="text-white font-semibold text-xl">Foxstocks</span>
+              <span className="text-white font-semibold text-xl">FinVerse</span>
             </div>
 
             {/* Navigation */}
