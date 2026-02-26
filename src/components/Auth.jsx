@@ -1,7 +1,14 @@
 import { useState } from "react";
 
-export default function Auth({ onBack }) {
+export default function Auth({ onBack, onLoginSuccess }) {
   const [isSignUp, setIsSignUp] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // in a real app you'd validate and authenticate here
+    const dummyUser = { name: "User" };
+    if (onLoginSuccess) onLoginSuccess(dummyUser);
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -33,7 +40,7 @@ export default function Auth({ onBack }) {
           </h2>
         </div>
 
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
 
             {isSignUp && (
               <input
