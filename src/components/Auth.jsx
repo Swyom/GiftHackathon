@@ -34,10 +34,10 @@ export default function Auth({ onBack, onLoginSuccess }) {
     });
   };
 
-  // NEW: A failsafe to prevent the phone from hanging infinitely
-  const fetchWithTimeout = async (promise, ms = 10000) => {
+  // FIX: Increased timeout to 45 seconds (45000ms) to allow ngrok to complete the request
+  const fetchWithTimeout = async (promise, ms = 45000) => {
     const timeout = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Request timed out. Please open this link in standard Safari or Chrome, not an in-app browser.")), ms)
+      setTimeout(() => reject(new Error("Request timed out. If using ngrok, you MUST add your ngrok URL to Supabase -> Authentication -> URL Configuration.")), ms)
     );
     return Promise.race([promise, timeout]);
   };
@@ -53,7 +53,7 @@ export default function Auth({ onBack, onLoginSuccess }) {
         if (data?.user) {
           clearInterval(pollingIntervalRef.current);
           setLoading(false);
-          onLoginSuccess(); 
+          if (onLoginSuccess) onLoginSuccess(); 
         }
       } catch (err) {
         // Silently catch polling errors (waiting for email verify)
@@ -76,7 +76,6 @@ export default function Auth({ onBack, onLoginSuccess }) {
           throw new Error("Password must be at least 6 characters");
         }
 
-        // Added the timeout failsafe here
         const { data: authData, error: authError } = await fetchWithTimeout(
           supabase.auth.signUp({
             email: formData.email,
@@ -109,7 +108,6 @@ export default function Auth({ onBack, onLoginSuccess }) {
         }
       } else {
         // --- SIGN IN FLOW ---
-        // Added the timeout failsafe here
         const { data, error: signInError } = await fetchWithTimeout(
           supabase.auth.signInWithPassword({
             email: formData.email,
@@ -121,11 +119,10 @@ export default function Auth({ onBack, onLoginSuccess }) {
 
         if (data.user) {
           setLoading(false);
-          onLoginSuccess(); 
+          if (onLoginSuccess) onLoginSuccess(); 
         }
       }
     } catch (err) {
-      // If it fails or times out, it will cleanly turn off the loading spinner and show the error!
       setError(err.message);
       setLoading(false); 
     }

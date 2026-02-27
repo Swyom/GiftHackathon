@@ -2,25 +2,39 @@ import React, { useState, useEffect } from "react";
 import Auth from "./components/Auth";
 import FinVerseLanding from "./components/landing";
 import Dashboard from "./components/dashboard/Dashboard";
+import StockDetail from "./components/dashboard/StockDetail"; 
 import { supabase } from "./lib/supabaseClient";
 
 const App = () => {
-  const [currentView, setCurrentView] = useState("landing"); // "landing", "auth", "dashboard"
+  const [currentView, setCurrentView] = useState("landing"); 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  const [selectedStockSymbol, setSelectedStockSymbol] = useState(null);
 
   useEffect(() => {
     let mounted = true;
 
-    // This function handles everything: fetching the profile AND setting the view
+    // MASTER FAILSAFE: If the network hangs for more than 4 seconds, force the loading screen off!
+    const failsafeTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("Network took too long. Forcing loading to close.");
+        setLoading(false);
+      }
+    }, 4000);
+
     const handleSession = async (session) => {
+      if (!mounted) return;
+
       if (session?.user) {
         try {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
+          // We wrap the DB fetch in a timeout so it doesn't hang the app
+          const fetchPromise = supabase.from('users').select('*').eq('id', session.user.id).maybeSingle();
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('DB Timeout')), 3000));
+          
+          const { data: userData, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+          if (error && error.message !== 'DB Timeout') throw error;
 
           if (mounted) {
             setUser({
@@ -30,44 +44,54 @@ const App = () => {
               phone: userData?.phone,
               dob: userData?.date_of_birth
             });
-            // If they just logged in from the Auth screen, force them to the Landing Page!
-            setCurrentView((prevView) => prevView === 'auth' ? 'landing' : prevView);
+            setCurrentView((prev) => (prev === 'auth' || prev === 'landing') ? 'dashboard' : prev);
           }
         } catch (err) {
-          console.error("Profile fetch error, using fallback data.");
+          console.error("Profile fetch error:", err.message);
+          // Fallback if DB fetch fails but user is still authenticated
           if (mounted) {
             setUser({
               id: session.user.id,
               email: session.user.email,
               name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
             });
-            setCurrentView((prevView) => prevView === 'auth' ? 'landing' : prevView);
+            setCurrentView((prev) => (prev === 'auth' || prev === 'landing') ? 'dashboard' : prev);
           }
+        } finally {
+          if (mounted) setLoading(false);
         }
       } else {
-        if (mounted) setUser(null);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
-      if (mounted) setLoading(false);
     };
 
-    // 1. Check if user is already logged in on initial load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSession(session);
-    });
+    // Safely attempt to get the session with a catch block
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        handleSession(session);
+      })
+      .catch((err) => {
+        console.error("Supabase getSession error:", err);
+        if (mounted) setLoading(false);
+      });
 
-    // 2. The Global Listener: Detects logins, logouts, and mobile email verifications automatically
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       handleSession(session);
     });
 
     return () => {
       mounted = false;
+      clearTimeout(failsafeTimer);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loading]); // Added loading to dependency array for the failsafe
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setUser(null); 
     setCurrentView("landing");
   };
 
@@ -80,16 +104,41 @@ const App = () => {
     );
   }
 
-  // ROUTER LOGIC
+  // --- ROUTER LOGIC ---
+
+  if (currentView === "stockDetail" && user) {
+    return (
+      <StockDetail 
+        stockSymbol={selectedStockSymbol} 
+        onBack={() => setCurrentView("dashboard")} 
+      />
+    );
+  }
+
   if (currentView === "dashboard" && user) {
-    return <Dashboard user={user} onLogout={handleLogout} onHome={() => setCurrentView("landing")} />;
+    return (
+      <Dashboard 
+        user={user} 
+        onLogout={handleLogout} 
+        onHome={() => setCurrentView("landing")}
+        onViewStock={(symbol) => {
+          setSelectedStockSymbol(symbol);
+          setCurrentView("stockDetail");
+        }}
+      />
+    );
   }
 
   if (currentView === "auth" && !user) {
-    return <Auth onBack={() => setCurrentView("landing")} />; 
+    return (
+      <Auth 
+        onBack={() => setCurrentView("landing")} 
+        onLoginSuccess={() => setCurrentView("dashboard")} 
+      /> 
+    );
   }
 
-  // DEFAULT VIEW: The Landing Page
+  // Default
   return (
     <FinVerseLanding 
       user={user}
