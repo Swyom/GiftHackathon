@@ -5,6 +5,7 @@ import http from 'http';
 import natural from 'natural';
 import dotenv from 'dotenv';
 import cors from 'cors'; // Add this import
+import pool from './db.js'; // Add this line at the top
 
 dotenv.config(); // load FINNHUB_KEY or other API keys from .env
 
@@ -18,7 +19,7 @@ const io = new Server(server, { cors: { origin: "*" } });
 const detectDrasticEvent = (headline, sentiment) => {
     const triggers = ['CRASH', 'SURGE', 'COLLAPSE', 'PLUMMET', 'WAR'];
     const hasTriggerWord = triggers.some(word => headline.toUpperCase().includes(word));
-    return hasTriggerWord || Math.abs(sentiment) > 0.85; 
+    return hasTriggerWord || Math.abs(sentiment) > 0.85;
 };
 
 const analyzer = new natural.SentimentAnalyzer("English", natural.PorterStemmer, "afinn");
@@ -26,8 +27,8 @@ const tokenizer = new natural.WordTokenizer();
 
 function getMLSentiment(text) {
     const tokens = tokenizer.tokenize(text);
-    const score = analyzer.getSentiment(tokens); 
-    
+    const score = analyzer.getSentiment(tokens);
+
     if (score > 0.2) return { label: 'Bullish', color: 'text-green-400', score };
     if (score < -0.2) return { label: 'Bearish', color: 'text-red-400', score };
     return { label: 'Neutral', color: 'text-gray-400', score };
@@ -41,7 +42,7 @@ async function updateNews() {
     try {
         // Fixed: Used the API_KEY variable instead of "YOUR_KEY"
         const response = await axios.get(`https://finnhub.io/api/v1/news?category=general&token=${API_KEY}`);
-        
+
         if (response.data && response.data.length > 0) {
             const latest = response.data[0];
             const analysis = getMLSentiment(latest.headline); // Use real ML score [cite: 45]
@@ -56,8 +57,8 @@ async function updateNews() {
                 });
             }
         }
-    } catch (err) { 
-        console.error("Error in updateNews:", err.message); 
+    } catch (err) {
+        console.error("Error in updateNews:", err.message);
     }
 }
 
@@ -99,6 +100,81 @@ app.get('/trigger-crash', (req, res) => {
     });
     res.send("Alert sent to frontend!");
 });
+
+
+
+
+
+// GET learning chapters for the Tutorial page
+app.get('/api/chapters', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM finance_chapters ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to load chapters" });
+    }
+});
+
+// --- UPDATED LEARNING MODULE ROUTES ---
+
+// 1. GET all available courses for the selection screen
+app.get('/api/courses', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM finance_courses ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Database Query Error:", err.message);
+        res.status(500).json({ error: "Failed to load courses" });
+    }
+});
+
+// 2. GET chapters specifically linked to a selected course
+app.get('/api/courses/:id/chapters', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM finance_chapters WHERE course_id = $1 ORDER BY id ASC',
+            [req.params.id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to load curriculum" });
+    }
+});
+
+// 3. GET separate sub-topics (Detailed Theory + Images) for a specific chapter
+app.get('/api/chapters/:id/subtopics', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(
+            'SELECT * FROM chapter_subtopics WHERE chapter_id = $1 ORDER BY id ASC',
+            [id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Sub-topic error:", err.message);
+        res.status(500).json({ error: "Failed to load sub-topics" });
+    }
+});
+
+// 4. POST user progress to show on the Dashboard
+// Updated to use 'topic_id' matching your new database schema
+app.post('/api/save-progress', async (req, res) => {
+    const { user_id, topic_id, score } = req.body;
+    try {
+        await pool.query(
+            'INSERT INTO user_learning_progress (user_id, topic_id, score) VALUES ($1, $2, $3)',
+            [user_id, topic_id, score]
+        );
+        res.json({ message: "Progress saved!" });
+    } catch (err) {
+        console.error("Progress Save Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- END UPDATED LEARNING MODULE ROUTES ---
+
 
 // simple health-check
 app.get('/', (req, res) => {

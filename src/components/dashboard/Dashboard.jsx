@@ -30,6 +30,32 @@ function Dashboard({ user }) {
       .catch((err) => console.error('failed to load nifty quote', err));
   }, []);
 
+// Inside Dashboard.jsx
+const [learningProgress, setLearningProgress] = useState(0);
+
+useEffect(() => {
+    fetch('http://localhost:5000/api/user-progress/1') // Fetch for user_id 1
+        .then(res => res.json())
+        .then(data => {
+            // Calculate total progress percentage
+            const completedCount = data.length;
+            const totalChapters = 5; // Example total
+            setLearningProgress((completedCount / totalChapters) * 100);
+        });
+}, []);
+
+// UI Section for the Dashboard
+<div className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+    <h3 className="text-gray-400 text-sm font-semibold mb-4 uppercase tracking-wider">Learning Progress</h3>
+    <div className="flex items-center justify-between">
+        <span className="text-3xl font-bold text-white">{Math.round(learningProgress)}%</span>
+        <div className="w-32 bg-gray-700 h-3 rounded-full overflow-hidden">
+            <div className="bg-green-500 h-full" style={{ width: `${learningProgress}%` }}></div>
+        </div>
+    </div>
+    <p className="text-xs text-gray-500 mt-4 italic">Complete all chapters to unlock "Expert" rank.</p>
+</div>
+
   // Sample data based on the image
   const userStats = {
     name: "Matt",
