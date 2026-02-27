@@ -9,7 +9,6 @@ import {
   SparklesIcon,
   ChartPieIcon,
   BanknotesIcon,
-  TrendingUpIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
@@ -133,7 +132,7 @@ function Portfolio() {
         ((prev.current - prev.invested) / prev.invested * 100) ? current : prev
     );
     insights.push({
-      icon: TrendingUpIcon,
+      icon: ArrowTrendingUpIcon,
       text: `${topGainer.symbol} is your top performer with ${(((topGainer.current - topGainer.invested) / topGainer.invested * 100)).toFixed(1)}% gains.`,
       type: 'positive'
     });
@@ -182,7 +181,7 @@ function Portfolio() {
         >
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-400 uppercase tracking-wide">Current Value</p>
-            <TrendingUpIcon className="w-5 h-5 text-cyan-400" />
+            <ArrowTrendingUpIcon className="w-5 h-5 text-cyan-400" />
           </div>
           <p className="text-3xl font-bold text-white">${totalCurrent.toLocaleString()}</p>
           <p className="text-xs text-gray-500 mt-2">Market value</p>

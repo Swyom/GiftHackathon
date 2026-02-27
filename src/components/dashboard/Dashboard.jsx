@@ -28,7 +28,7 @@ export default function Dashboard(props) {
 
   // Indian Portfolio with Fallback Values (Prevents ₹0 if API fails)
   const portfolioHoldings = [
-    { name: 'Reliance Ind.', symbol: 'RELIANCE.NS', shares: 10, fallbackValue: 2950.50, fallbackChange: .2 },
+    { name: 'Reliance Ind.', symbol: 'RELIANCE.NS', shares: 10, fallbackValue: 2950.50, fallbackChange: 0.2 },
     { name: 'TCS', symbol: 'TCS.NS', shares: 15, fallbackValue: 4100.25, fallbackChange: -0.5 },
     { name: 'HDFC Bank', symbol: 'HDFCBANK.NS', shares: 8, fallbackValue: 1450.75, fallbackChange: 0.8 },
     { name: 'Infosys', symbol: 'INFY.NS', shares: 25, fallbackValue: 1600.00, fallbackChange: 1.5 },
